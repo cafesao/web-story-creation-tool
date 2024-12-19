@@ -17,10 +17,10 @@
 /**
  * Internal dependencies
  */
-import { ITALIC, WEIGHT } from './customConstants';
-import { styleToNumeric } from './formatters/util';
-import { getAllStyleSetsInSelection } from './draftUtils';
-import { getSelectAllStateFromHTML } from './htmlManipulation';
+import { ITALIC, WEIGHT } from "./customConstants";
+import { getAllStyleSetsInSelection } from "./draftUtils";
+import { styleToNumeric } from "./formatters/util";
+import { getSelectAllStateFromHTML } from "./htmlManipulation";
 
 /**
  * Gets font styles for a characters, considers italic and weight only.
@@ -29,10 +29,14 @@ import { getSelectAllStateFromHTML } from './htmlManipulation';
  * @return {[]} Array of found styles for the character.
  */
 function getFontStylesForCharacter(styles) {
-  return styles
-    .toArray()
-    .map((style) => style.style ?? style)
-    .filter((style) => style === ITALIC || style.startsWith(WEIGHT));
+	return styles
+		.toArray()
+		.map((style) => style.style ?? style)
+		.filter(
+			(style) =>
+				typeof style === "string" &&
+				(style === ITALIC || style.startsWith(WEIGHT)),
+		);
 }
 
 /**
@@ -43,26 +47,26 @@ function getFontStylesForCharacter(styles) {
  * @return {[]} Array of variants.
  */
 function getVariants(editorState) {
-  const styleSets = getAllStyleSetsInSelection(editorState);
-  if (styleSets.length === 0) {
-    return getFontStylesForCharacter(editorState.getCurrentInlineStyle());
-  }
-  const styles = styleSets.map((styleSet) => {
-    const [style = ''] = getFontStylesForCharacter(styleSet);
+	const styleSets = getAllStyleSetsInSelection(editorState);
+	if (styleSets.length === 0) {
+		return getFontStylesForCharacter(editorState.getCurrentInlineStyle());
+	}
+	const styles = styleSets.map((styleSet) => {
+		const [style = ""] = getFontStylesForCharacter(styleSet);
 
-    return style;
-  });
+		return style;
+	});
 
-  return [...new Set(styles)];
+	return [...new Set(styles)];
 }
 
 export default function getFontVariants(html) {
-  const htmlState = getSelectAllStateFromHTML(html);
-  const variants = getVariants(htmlState).map((variant) => [
-    variant.startsWith(ITALIC) ? 1 : 0,
-    variant.startsWith(WEIGHT) ? styleToNumeric(WEIGHT, variant) : 400,
-  ]);
+	const htmlState = getSelectAllStateFromHTML(html);
+	const variants = getVariants(htmlState).map((variant) => [
+		variant.startsWith(ITALIC) ? 1 : 0,
+		variant.startsWith(WEIGHT) ? styleToNumeric(WEIGHT, variant) : 400,
+	]);
 
-  // Return default variant or the found variants.
-  return variants.length > 0 ? variants : [[0, 400]];
+	// Return default variant or the found variants.
+	return variants.length > 0 ? variants : [[0, 400]];
 }

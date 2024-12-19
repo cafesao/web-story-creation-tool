@@ -17,13 +17,13 @@
 /**
  * External dependencies
  */
-import { Modifier, EditorState } from 'draft-js';
+import { EditorState, Modifier } from "draft-js";
 
 /**
  * Internal dependencies
  */
-import { NONE } from './customConstants';
-import { getAllStyleSetsInSelection } from './draftUtils';
+import { NONE } from "./customConstants";
+import { getAllStyleSetsInSelection } from "./draftUtils";
 
 /**
  * Get a first style in the given set that match the given prefix,
@@ -34,12 +34,13 @@ import { getAllStyleSetsInSelection } from './draftUtils';
  * @return {string} First match or NONE
  */
 export function getPrefixStyleForCharacter(styles, prefix) {
-  const list = styles.toArray().map((style) => style.style ?? style);
-  const matcher = (style) => style && style.startsWith(prefix);
-  if (!list.some(matcher)) {
-    return NONE;
-  }
-  return list.find(matcher);
+	const list = styles.toArray().map((style) => style.style ?? style);
+	const matcher = (style) =>
+		typeof style === "string" && style.startsWith(prefix);
+	if (!list.some(matcher)) {
+		return NONE;
+	}
+	return list.find(matcher);
 }
 
 /**
@@ -91,24 +92,24 @@ export function getPrefixStyleForCharacter(styles, prefix) {
  * @return {Array.<string>} Deduped array of all matching styles
  */
 export function getPrefixStylesInSelection(editorState, prefix) {
-  const selection = editorState.getSelection();
-  const styleSets = getAllStyleSetsInSelection(editorState);
-  if (selection.isCollapsed() || styleSets.length === 0) {
-    return [
-      getPrefixStyleForCharacter(editorState.getCurrentInlineStyle(), prefix),
-    ];
-  }
+	const selection = editorState.getSelection();
+	const styleSets = getAllStyleSetsInSelection(editorState);
+	if (selection.isCollapsed() || styleSets.length === 0) {
+		return [
+			getPrefixStyleForCharacter(editorState.getCurrentInlineStyle(), prefix),
+		];
+	}
 
-  const styles = new Set();
-  styleSets.forEach((styleSet) =>
-    styles.add(getPrefixStyleForCharacter(styleSet, prefix))
-  );
+	const styles = new Set();
+	styleSets.forEach((styleSet) =>
+		styles.add(getPrefixStyleForCharacter(styleSet, prefix)),
+	);
 
-  return [...styles];
+	return [...styles];
 }
 
 function applyContent(editorState, contentState) {
-  return EditorState.push(editorState, contentState, 'change-inline-style');
+	return EditorState.push(editorState, contentState, "change-inline-style");
 }
 
 /**
@@ -126,79 +127,79 @@ function applyContent(editorState, contentState) {
  * @return {Object} New editor state
  */
 export function togglePrefixStyle(
-  editorState,
-  prefix,
-  shouldSetStyle = null,
-  getStyleToSet = null
+	editorState,
+	prefix,
+	shouldSetStyle = null,
+	getStyleToSet = null,
 ) {
-  if (editorState.getSelection().isCollapsed()) {
-    // A different set of rules apply here
-    // First find all styles that apply at cursor - we'll reapply those as override
-    // with modifications at the end
-    let inlineStyles = editorState.getCurrentInlineStyle();
+	if (editorState.getSelection().isCollapsed()) {
+		// A different set of rules apply here
+		// First find all styles that apply at cursor - we'll reapply those as override
+		// with modifications at the end
+		let inlineStyles = editorState.getCurrentInlineStyle();
 
-    // See if there's a matching style for our prefix
-    const foundMatch = getPrefixStyleForCharacter(inlineStyles, prefix);
+		// See if there's a matching style for our prefix
+		const foundMatch = getPrefixStyleForCharacter(inlineStyles, prefix);
 
-    // Then remove potentially found style from list
-    if (foundMatch !== NONE) {
-      inlineStyles = inlineStyles.remove(foundMatch);
-    }
+		// Then remove potentially found style from list
+		if (foundMatch !== NONE) {
+			inlineStyles = inlineStyles.remove(foundMatch);
+		}
 
-    // Then figure out whether to apply new style or not
-    const willAddStyle = shouldSetStyle
-      ? shouldSetStyle([foundMatch])
-      : foundMatch === NONE;
+		// Then figure out whether to apply new style or not
+		const willAddStyle = shouldSetStyle
+			? shouldSetStyle([foundMatch])
+			: foundMatch === NONE;
 
-    // If so, add to list
-    if (willAddStyle) {
-      const styleToAdd = getStyleToSet ? getStyleToSet([foundMatch]) : prefix;
-      inlineStyles = inlineStyles.add(styleToAdd);
-    }
+		// If so, add to list
+		if (willAddStyle) {
+			const styleToAdd = getStyleToSet ? getStyleToSet([foundMatch]) : prefix;
+			inlineStyles = inlineStyles.add(styleToAdd);
+		}
 
-    // Finally apply to style override
-    const newState = EditorState.setInlineStyleOverride(
-      editorState,
-      inlineStyles
-    );
-    return newState;
-  }
+		// Finally apply to style override
+		const newState = EditorState.setInlineStyleOverride(
+			editorState,
+			inlineStyles,
+		);
+		return newState;
+	}
 
-  const matchingStyles = getPrefixStylesInSelection(editorState, prefix);
+	const matchingStyles = getPrefixStylesInSelection(editorState, prefix);
 
-  // First remove all old styles matching prefix
-  // (except NONE, it's not actually a style)
-  const stylesToRemove = matchingStyles.filter((s) => s !== NONE);
-  const strippedContentState = stylesToRemove.reduce(
-    (contentState, styleToRemove) =>
-      Modifier.removeInlineStyle(
-        contentState,
-        editorState.getSelection(),
-        styleToRemove
-      ),
-    editorState.getCurrentContent()
-  );
+	// First remove all old styles matching prefix
+	// (except NONE, it's not actually a style)
+	const stylesToRemove = matchingStyles.filter((s) => s !== NONE);
+	const strippedContentState = stylesToRemove.reduce(
+		(contentState, styleToRemove) =>
+			Modifier.removeInlineStyle(
+				contentState,
+				editorState.getSelection(),
+				styleToRemove,
+			),
+		editorState.getCurrentContent(),
+	);
 
-  // Should we add a style to everything now?
-  // If no function is given, we simply add the style if any
-  // character did not have a match (NONE is in the list)
-  const willSetStyle = shouldSetStyle
-    ? shouldSetStyle(matchingStyles)
-    : matchingStyles.includes(NONE);
+	// Should we add a style to everything now?
+	// If no function is given, we simply add the style if any
+	// character did not have a match (NONE is in the list)
+	const willSetStyle = shouldSetStyle
+		? shouldSetStyle(matchingStyles)
+		: matchingStyles.includes(NONE);
 
-  if (!willSetStyle) {
-    // we're done!
-    return applyContent(editorState, strippedContentState);
-  }
+	if (!willSetStyle) {
+		// we're done!
+		return applyContent(editorState, strippedContentState);
+	}
 
-  // Add style to entire selection
-  // If no function is given, we simple add the prefix as a style
-  const styleToSet = getStyleToSet ? getStyleToSet(matchingStyles) : prefix;
-  const newContentState = Modifier.applyInlineStyle(
-    strippedContentState,
-    editorState.getSelection(),
-    styleToSet
-  );
+	// Add style to entire selection
+	// If no function is given, we simple add the prefix as a style
+	const styleToSet = getStyleToSet ? getStyleToSet(matchingStyles) : prefix;
+	const newContentState = Modifier.applyInlineStyle(
+		strippedContentState,
+		editorState.getSelection(),
+		styleToSet,
+	);
 
-  return applyContent(editorState, newContentState);
+	return applyContent(editorState, newContentState);
 }
