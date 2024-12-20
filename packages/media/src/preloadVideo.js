@@ -17,7 +17,7 @@
 /**
  * Internal dependencies
  */
-import preloadVideoMetadata from './preloadVideoMetadata';
+import preloadVideoMetadata from "./preloadVideoMetadata";
 
 /**
  * Preload a video.
@@ -26,14 +26,14 @@ import preloadVideoMetadata from './preloadVideoMetadata';
  * @return {Promise<HTMLVideoElement>} Video element.
  */
 async function preloadVideo(src) {
-  const video = await preloadVideoMetadata(src);
+	const video = await preloadVideoMetadata(src);
 
-  return new Promise((resolve, reject) => {
-    video.addEventListener('canplay', () => resolve(video), { once: true });
-    video.addEventListener('error', reject);
+	return new Promise((resolve, reject) => {
+		video.addEventListener("canplay", () => resolve(video), { once: true });
+		video.addEventListener("error", reject);
 
-    video.preload = 'auto';
-  });
+		video.preload = "auto";
+	});
 }
 
 export default preloadVideo;

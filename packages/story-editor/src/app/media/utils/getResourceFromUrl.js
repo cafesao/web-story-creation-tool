@@ -18,14 +18,14 @@
  * External dependencies
  */
 import {
-  createResource,
-  getImageDimensions,
-  getTypeFromMime,
-  preloadVideo,
-  seekVideo,
-  getVideoLength,
-  hasVideoGotAudio,
-} from '@googleforcreators/media';
+	createResource,
+	getImageDimensions,
+	getTypeFromMime,
+	getVideoLength,
+	hasVideoGotAudio,
+	preloadVideo,
+	seekVideo,
+} from "@googleforcreators/media";
 
 /**
  * @typedef {Object} ResourceLike
@@ -45,67 +45,67 @@ import {
  * @return {Promise<Resource>} Resource object.
  */
 async function getResourceFromUrl(resourceLike) {
-  const {
-    src,
-    mimeType,
-    width,
-    height,
-    isMuted,
-    length,
-    lengthFormatted,
-    ...rest
-  } = resourceLike;
-  const type = getTypeFromMime(mimeType);
+	const {
+		src,
+		mimeType,
+		width,
+		height,
+		isMuted,
+		length,
+		lengthFormatted,
+		...rest
+	} = resourceLike;
+	const type = getTypeFromMime(mimeType);
 
-  if (!['image', 'video'].includes(type)) {
-    throw new Error('Invalid media type.');
-  }
+	if (!["image", "video"].includes(type)) {
+		throw new Error("Invalid media type.");
+	}
 
-  const hasDimensions = width && height;
-  const videoHasMissingMetadata =
-    !hasDimensions ||
-    isMuted === null ||
-    length === null ||
-    lengthFormatted === null;
+	const hasDimensions = width && height;
+	const videoHasMissingMetadata =
+		!hasDimensions ||
+		isMuted === null ||
+		length === null ||
+		lengthFormatted === null;
 
-  const additionalData = {};
+	const additionalData = {};
 
-  // Only need to fetch metadata if not already provided.
+	// Only need to fetch metadata if not already provided.
 
-  if (type === 'video' && videoHasMissingMetadata) {
-    const video = await preloadVideo(src);
-    await seekVideo(video);
+	if (type === "video" && videoHasMissingMetadata) {
+		const video = await preloadVideo(src);
+		await seekVideo(video);
 
-    additionalData.width = video.videoWidth;
-    additionalData.height = video.videoHeight;
+		additionalData.width = video.videoWidth;
+		additionalData.height = video.videoHeight;
 
-    const videoLength = getVideoLength(video);
+		const videoLength = getVideoLength(video);
 
-    additionalData.length = videoLength.length;
-    additionalData.lengthFormatted = videoLength.lengthFormatted;
+		additionalData.length = videoLength.length;
+		additionalData.lengthFormatted = videoLength.lengthFormatted;
 
-    additionalData.isMuted = !hasVideoGotAudio(video);
-  }
+		additionalData.isMuted = !hasVideoGotAudio(video);
+	}
 
-  if (type === 'image' && !hasDimensions) {
-    const dimensions = await getImageDimensions(src);
-    additionalData.width = dimensions.width;
-    additionalData.height = dimensions.height;
-  }
+	if (type === "image" && !hasDimensions) {
+		const dimensions = await getImageDimensions(src);
+		additionalData.width = dimensions.width;
+		additionalData.height = dimensions.height;
+	}
 
-  return createResource({
-    type,
-    width,
-    height,
-    isMuted,
-    length,
-    lengthFormatted,
-    src,
-    isExternal: true,
-    mimeType,
-    ...rest,
-    ...additionalData,
-  });
+	return createResource({
+		type,
+		width,
+		height,
+		isMuted,
+		length,
+		lengthFormatted,
+		src,
+		isExternal: true,
+		mimeType,
+		...rest,
+		...additionalData,
+	});
 }
 
 export default getResourceFromUrl;

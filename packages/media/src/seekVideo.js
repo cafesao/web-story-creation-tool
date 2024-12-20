@@ -24,23 +24,23 @@ const THREE_SECONDS = 3000;
  * @return {Promise<void>}
  */
 function seekVideo(video, offset = 0.99) {
-  if (video.currentTime === offset) {
-    return Promise.resolve();
-  }
+	if (video.currentTime === offset) {
+		return Promise.resolve();
+	}
 
-  return new Promise((resolve, reject) => {
-    // If the seek takes longer 3 seconds, guess it timed out and error out.
-    video.addEventListener('seeking', (evt) => {
-      const wait = setTimeout(() => {
-        clearTimeout(wait);
-        reject(evt);
-      }, THREE_SECONDS);
-    });
-    video.addEventListener('error', reject);
-    video.addEventListener('seeked', () => resolve(video), { once: true });
+	return new Promise((resolve, reject) => {
+		// If the seek takes longer 3 seconds, guess it timed out and error out.
+		video.addEventListener("seeking", (evt) => {
+			const wait = setTimeout(() => {
+				clearTimeout(wait);
+				reject(evt);
+			}, THREE_SECONDS);
+		});
+		video.addEventListener("error", reject);
+		video.addEventListener("seeked", () => resolve(video), { once: true });
 
-    video.currentTime = offset;
-  });
+		video.currentTime = offset;
+	});
 }
 
 export default seekVideo;

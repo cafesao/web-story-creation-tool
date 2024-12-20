@@ -30,7 +30,7 @@ import { useCallback, useMemo, useState } from "@googleforcreators/react";
 import { trackError, trackEvent } from "@googleforcreators/tracking";
 import { v4 as uuidv4 } from "uuid";
 
-import { useAPI } from "../../../../../../app/api";
+import axios from "axios";
 import { useConfig } from "../../../../../../app/config";
 import {
 	getPosterName,
@@ -45,6 +45,26 @@ import useCORSProxy from "../../../../../../utils/useCORSProxy";
 import useLibrary from "../../../../useLibrary";
 import { getErrorMessage, isValidUrlForHotlinking } from "./utils";
 
+/**
+ * WordPress dependencies
+ */
+
+export function getHotlinkInfo(url) {
+	const ext = url.split(".").pop()?.toLowerCase() || "jpg";
+	const isVideo = ["mp4", "webm", "mov"].includes(ext);
+
+	return axios.get(url, { responseType: "blob" }).then((res) => {
+		return {
+			ext,
+			mimeType:
+				res.headers["content-type"] ||
+				(isVideo ? `video/${ext}` : `image/${ext}`),
+			type: isVideo ? "video" : "image",
+			fileName: url.split("/").pop() || `file.${ext}`,
+			fileSize: parseInt(res.headers["content-length"] || "0"),
+		};
+	});
+}
 function useInsert({ link, setLink, setErrorMsg, onClose }) {
 	const { insertElement } = useLibrary((state) => ({
 		insertElement: state.actions.insertElement,
@@ -71,9 +91,6 @@ function useInsert({ link, setLink, setErrorMsg, onClose }) {
 			allowedMimeTypes.map((type) => getExtensionsFromMimeType(type)).flat(),
 		[allowedMimeTypes],
 	);
-	const {
-		actions: { getHotlinkInfo },
-	} = useAPI();
 	const { updateBaseColor } = useDetectBaseColor({});
 
 	const [isInserting, setIsInserting] = useState(false);
@@ -159,6 +176,7 @@ function useInsert({ link, setLink, setErrorMsg, onClose }) {
 				setLink("");
 				onClose();
 			} catch (e) {
+				console.log(e);
 				setErrorMsg(getErrorMessage());
 			} finally {
 				setIsInserting(false);
@@ -190,12 +208,7 @@ function useInsert({ link, setLink, setErrorMsg, onClose }) {
 		setIsInserting(true);
 
 		try {
-			const hotlinkInfo = {
-				ext: "jpg",
-				mimeType: "image/jpeg",
-				type: "image",
-				fileName: "file_name.jpg",
-			};
+			const hotlinkInfo = await getHotlinkInfo(link);
 			const shouldProxy = await checkResourceAccess(link);
 
 			// After getting link metadata and before actual insertion
@@ -209,6 +222,7 @@ function useInsert({ link, setLink, setErrorMsg, onClose }) {
 
 			await insertMedia(hotlinkInfo, shouldProxy);
 		} catch (err) {
+			console.log(err);
 			setIsInserting(false);
 
 			trackError("hotlink_media", err?.message);
