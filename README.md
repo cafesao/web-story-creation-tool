@@ -1,3 +1,8 @@
+# Web story creaton tool
+- Este projeto é um fork do repositorio do [rtCamp](https://github.com/rtCamp/web-story-creation-tool)
+- Não era possivel enviar imagens/videos via URL, e isso foi corrigido neste repositorio.
+- O codigo é legado, porém, o projeto ainda é bastante funcional.
+
 ## Passos para rodar o projeto
 
 1. nvm install 16
